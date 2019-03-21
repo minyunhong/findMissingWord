@@ -8,8 +8,12 @@
 #define STR_LENG    255
 char notExistWordList[10000][STR_LENG] = {0};
 char existWordList[10000][STR_LENG] = {0};
+char existDiffCaseWordList[10000][STR_LENG] = {0};
+char existOnlyOneWordList[10000][STR_LENG] = {0};
 int cntNotExistWord = 0;
 int cntExistWord = 0;
+int cntExistDiffCaseWord = 0;
+int cntExistOnlyOneWord = 0;
 static int temp = 0;
 
 bool checkFirstMeaninglessData(char *pstr)
@@ -20,13 +24,51 @@ bool checkFirstMeaninglessData(char *pstr)
         return false;
 }
 
+bool checkAlreadySearchedWord(char *word)
+{
+    int i=0;
+
+    //1. check already searched existing word
+    for (i=0; i<cntExistWord; i++)
+    {
+        if (strcmp(existWordList[i], word) == 0)
+            return true;
+    }
+
+    //2. check already searched not existing word
+    for (i=0; i<cntNotExistWord; i++)
+    {
+        if (strcmp(notExistWordList[i], word) == 0)
+            return true;
+    }
+
+    //3. check already searched existing different case word
+    for (i=0; i<cntExistDiffCaseWord; i++)
+    {
+        if (strcmp(existDiffCaseWordList[i], word) == 0)
+            return true;
+    }
+
+    //4. check already searched existing onlyone word
+    for (i=0; i<cntExistOnlyOneWord; i++)
+    {
+        if (strcmp(existOnlyOneWordList[i], word) == 0)
+            return true;
+    }
+
+    return false;
+}
+
 bool checkExistingWord(char *argv, char *word)
 {
     FILE *fpBnf = NULL;
+    char *ptr = NULL;
+    char *delimiter = " ";
+    unsigned char *pSafe;
     char prefixWord[STR_LENG] = "!pronounce ";
     char pstr[STR_LENG] = {0};
     char onlyWord[STR_LENG] = {0};
-    int i = 0;
+    bool existDiffCase = false;
 
     fpBnf = fopen(argv, "r");
     if (fpBnf == NULL)
@@ -38,31 +80,27 @@ bool checkExistingWord(char *argv, char *word)
     strncpy(onlyWord, word, strlen(word)+1);
 
     //pre condition for result array
-    //1. check already searched existing word
-    for (i=0; i<cntExistWord; i++)
-    {
-        if (strcmp(existWordList[i], onlyWord) == 0)
-            goto exitCheckFunc;
-    }
-
-    //2. check already searched not existing word
-    for (i=0; i<cntNotExistWord; i++)
-    {
-        if (strcmp(notExistWordList[i], onlyWord) == 0)
-            goto exitCheckFunc;
-    }
-
-    //make prefix word as like !pronounce xxx for comparing word
-    strcat(prefixWord, onlyWord);
+    if(checkAlreadySearchedWord(onlyWord) == true)
+        goto exitCheckFunc;
 
     while (1)
     {
         if (feof(fpBnf)!=0)
         {
-            strcpy(notExistWordList[cntNotExistWord++], onlyWord);
+            if(existDiffCase == true)
+            {
+                strcpy(existDiffCaseWordList[cntExistDiffCaseWord++], onlyWord);
 #if DEBUG
-            printf("--> not exist: %s\n", onlyWord);
+                printf("--> exist diff case: %s\n", onlyWord);
 #endif
+            }
+            else
+            {
+                strcpy(notExistWordList[cntNotExistWord++], onlyWord);
+#if DEBUG
+                printf("--> not exist: %s\n", onlyWord);
+#endif
+            }
             break;
         }
 
@@ -70,23 +108,45 @@ bool checkExistingWord(char *argv, char *word)
         fgets(pstr,sizeof(pstr),fpBnf);
 
         //skip carriage return or line feed
-        if (pstr[0] == '\r' || pstr[0] == '\n')
+        if (pstr[0] == '\r' || pstr[0] == '\n' || strstr(pstr, prefixWord) == NULL)
         {
             memset(pstr, STR_LENG, 0);
             continue;
         }
 
         //check existing word
-        if (strstr(pstr, prefixWord))
+        ptr = NULL;
+        if(strtok_r(pstr, delimiter, (char**)&pSafe) != NULL)
         {
-            strcpy(existWordList[cntExistWord++], onlyWord);
+            ptr = strtok_r(NULL, delimiter, (char**)&pSafe);
+
+            if(!strcasecmp(ptr, onlyWord))
+            {
+                if(!strcmp(ptr, onlyWord)) // perfectly the same word exists in .bnf
+                {
+                    if(strchr(strtok_r(NULL, delimiter, (char**)&pSafe), ';'))  // exists only one pronunciation 
+                    {
+                        strcpy(existOnlyOneWordList[cntExistOnlyOneWord++], onlyWord);
 #if DEBUG
-            printf("--> exist: %s\n", onlyWord);
+                        printf("--> exist only one word: %s\n", onlyWord);
 #endif
-            break;
+                    }
+                    else    // exists two or more pronunciations
+                    {
+                        strcpy(existWordList[cntExistWord++], onlyWord);
+#if DEBUG
+                        printf("--> exist: %s\n", onlyWord);
+#endif
+                    }
+                    break;
+                }
+                else                       // the word with different case exists in .bnf
+                    existDiffCase = true;
+            }
         }
         memset(pstr, STR_LENG, 0);
     }
+    existDiffCase = false;
 
 exitCheckFunc:
     fclose(fpBnf);
@@ -108,6 +168,11 @@ int saveNotExistWordList()
     for (i=0; i<cntNotExistWord; i++)
         fprintf(fp, "%s\n", notExistWordList[i]);
 
+    fprintf(fp, "\nonly one word exists..\n");
+
+    for (i=0; i<cntExistOnlyOneWord; i++)
+        fprintf(fp, "%s\n", existOnlyOneWordList[i]);
+
     fclose(fp);
 }
 
@@ -126,6 +191,11 @@ int saveExistWordList()
     for (i=0; i<cntExistWord; i++)
         fprintf(fp, "%s\n", existWordList[i]);
 
+    fprintf(fp, "\ndiffrent case word exists..\n");
+
+    for(i=0; i<cntExistDiffCaseWord; i++)
+        fprintf(fp, "%s\n", existDiffCaseWordList[i]);
+
     fclose(fp);
 }
 
@@ -133,7 +203,8 @@ int main( int argc, char *argv[] )
 {
     FILE *fpTxt = NULL;
 	char pstr[STR_LENG] = {0};
-    char *deleteSepeator = " <>[],.?|\t\n\v\r";
+    char *deleteSepeator = " [],./?\t\n\v\r";
+    unsigned char *pSafe;
 
     if (strstr(argv[1], ".bnf") && strstr(argv[2], ".txt"))
     {
@@ -168,15 +239,23 @@ int main( int argc, char *argv[] )
 
             //get one word in the sentence
             char *word = NULL;
-            word = strtok(pstr, deleteSepeator);
+            word = strtok_r(pstr, deleteSepeator, (char**)&pSafe);
             while (word != NULL)
             {
-                if (checkExistingWord(argv[1], word) == false)
+                if (strchr(word, '<') != NULL || strchr(word, '>') != NULL)
                 {
-                    printf("Terminated due to an error.\n");
-                    goto exitMain;
+                    // '<', '>' skip case
+                    word = strtok_r(NULL, deleteSepeator, (char**)&pSafe);
                 }
-                word = strtok(NULL, deleteSepeator);
+                else
+                {
+                    if (checkExistingWord(argv[1], word) == false)
+                    {
+                        printf("Terminated due to an error.\n");
+                        goto exitMain;
+                    }
+                    word = strtok_r(NULL, deleteSepeator, (char**)&pSafe);
+                }
             }
             memset(pstr, STR_LENG, 0);
         }
