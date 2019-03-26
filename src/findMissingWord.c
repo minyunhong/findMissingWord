@@ -16,6 +16,33 @@ int cntExistDiffCaseWord = 0;
 int cntExistOnlyOneWord = 0;
 static int temp = 0;
 
+void changeToLowerWord(char* word){
+	int length = strlen(word);
+	int i;
+	for(i=0; i<length; i++){
+		word[i] = (char)tolower(word[i]);
+	}
+}
+
+bool isAllCapitalWord(char* word){
+//return true when the word is consist of all capital letter, else return false
+	int length = strlen(word);
+	int i;
+	for(i=0; i<length; i++){
+		if(islower(word[i]))
+			return false;
+	}
+#if DEBUG
+    printf("All capital word %s\n", word);
+#endif
+
+	return true;
+}
+
+int compareFunction(const void *a, const void *b){
+	return (strcmp((char*)a, (char*)b));
+}
+
 bool checkFirstMeaninglessData(char *pstr)
 {
     if (pstr[0] == '\r' || pstr[0] == '\n' || pstr[0] == '\v' || pstr[0] == '\t')
@@ -124,7 +151,7 @@ bool checkExistingWord(char *argv, char *word)
             {
                 if(!strcmp(ptr, onlyWord)) // perfectly the same word exists in .bnf
                 {
-                    if(strchr(strtok_r(NULL, delimiter, (char**)&pSafe), ';'))  // exists only one pronunciation 
+                    if(strchr(strtok_r(NULL, delimiter, (char**)&pSafe), ';'))  // exists only one pronunciation
                     {
                         strcpy(existOnlyOneWordList[cntExistOnlyOneWord++], onlyWord);
 #if DEBUG
@@ -157,6 +184,7 @@ int saveNotExistWordList()
 {
     FILE *fp = NULL;
     int i = 0;
+    char previous_word[STR_LENG] = "";
 
     fp = fopen("notExistWordList.txt", "wt");
     if (fp == NULL)
@@ -165,10 +193,28 @@ int saveNotExistWordList()
         return 0;
     }
 
-    for (i=0; i<cntNotExistWord; i++)
-        fprintf(fp, "%s\n", notExistWordList[i]);
+    //1. filtering all-captial-words (ex. AM/PM) and change other-words to lower
+    for(i=0; i<cntNotExistWord; i++){
+        if(!isAllCapitalWord(notExistWordList[i]))
+            changeToLowerWord(notExistWordList[i]);
+    }
+
+    //2. sort the word list
+    qsort(notExistWordList, cntNotExistWord, sizeof(*notExistWordList), compareFunction);
+
+    //3. remove duplicated word and write the list to file
+    for (i=0; i<cntNotExistWord; i++){
+        if(strcmp(previous_word, notExistWordList[i]))
+            fprintf(fp, "%s\n", notExistWordList[i]);
+#if DEBUG
+        else printf("duplicated word %s %s\n", previous_word, notExistWordList[i]);
+#endif
+        strcpy(previous_word, notExistWordList[i]);
+    }
 
     fprintf(fp, "\nonly one word exists..\n");
+
+    qsort(existOnlyOneWordList, cntExistOnlyOneWord, sizeof(*existOnlyOneWordList), compareFunction);
 
     for (i=0; i<cntExistOnlyOneWord; i++)
         fprintf(fp, "%s\n", existOnlyOneWordList[i]);
@@ -188,10 +234,14 @@ int saveExistWordList()
         return 0;
     }
 
+    qsort(existWordList, cntExistWord, sizeof(*existWordList), compareFunction);
+
     for (i=0; i<cntExistWord; i++)
         fprintf(fp, "%s\n", existWordList[i]);
 
     fprintf(fp, "\ndiffrent case word exists..\n");
+
+    qsort(existDiffCaseWordList, cntExistDiffCaseWord, sizeof(*existDiffCaseWordList), compareFunction);
 
     for(i=0; i<cntExistDiffCaseWord; i++)
         fprintf(fp, "%s\n", existDiffCaseWordList[i]);
