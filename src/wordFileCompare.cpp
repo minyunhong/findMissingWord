@@ -8,7 +8,8 @@ using namespace std;
 
 extern int makeFileCompareResult(char*, char*);
 
-set<string> compareAndFindDifferentWords(char* fp1, char* fp2){
+set<string> compareAndFindDifferentWords(char* fp1, char* fp2)
+{
 	set<string> first;
 	set<string> result;
 	string temp;
@@ -41,7 +42,8 @@ set<string> compareAndFindDifferentWords(char* fp1, char* fp2){
 //if you want to use this function in C file with gcc,
 //then you need to append "C" keyword like below.
 //extern "C" int makeFileCompareResult(char* firstfile, char* secondfile){
-extern int makeFileCompareResult(char* firstfile, char* secondfile){
+extern int makeFileCompareResult(char* firstfile, char* secondfile)
+{
 	set<string> result1, result2;
 	set<string>::iterator iter;
 	ofstream outFile("CompareResult.txt");
@@ -63,28 +65,3 @@ extern int makeFileCompareResult(char* firstfile, char* secondfile){
 	cout << "Check the CompareResult.txt\n";
 	return 0;
 }
-
-/*
-int main(int arc, char** argv){
-	set<string> result1, result2;
-	set<string>::iterator iter;
-	ofstream outFile("CompareResult.txt");
-	
-	result1 = compareAndFindDifferentWords(argv[1], argv[2]);
-	outFile << "****It's not in " << argv[1] << " but in " << argv[2] << "*****\n";
-	for(iter = result1.begin(); iter!=result1.end(); ++iter){
-		outFile << *iter << endl;
-	}
-
-	result2 = compareAndFindDifferentWords(argv[2], argv[1]);
-	outFile << "****It's not in " << argv[2] << " but in " << argv[1] << "*****\n";
-	for(iter = result2.begin(); iter!=result2.end(); ++iter){
-		outFile << *iter << endl;
-	}
-
-	outFile.close();
-
-	cout << "Check the CompareResult.txt\n";
-	return 0;
-}
-*/
