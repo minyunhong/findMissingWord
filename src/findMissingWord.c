@@ -3,8 +3,9 @@
 #include <string.h>
 #include <memory.h>
 #include <stdbool.h>
+#include <ctype.h>
 
-#define DEBUG   0
+#define DEBUG   1
 #define STR_LENG    255
 char notExistWordList[10000][STR_LENG] = {0};
 char existWordList[10000][STR_LENG] = {0};
@@ -16,6 +17,14 @@ int cntExistDiffCaseWord = 0;
 int cntExistOnlyOneWord = 0;
 static int temp = 0;
 
+//It is implemented in compare_list.cpp file.
+//you can complare two wordlist-files.
+extern int makeFileCompareResult(char*, char*);
+
+int compareFunction(const void *a, const void *b){
+	return (strcmp((char*)a, (char*)b));
+}
+
 void changeToLowerWord(char* word){
 	int length = strlen(word);
 	int i;
@@ -25,7 +34,6 @@ void changeToLowerWord(char* word){
 }
 
 bool isAllCapitalWord(char* word){
-//return true when the word is consist of all capital letter, else return false
 	int length = strlen(word);
 	int i;
 	for(i=0; i<length; i++){
@@ -37,10 +45,6 @@ bool isAllCapitalWord(char* word){
 #endif
 
 	return true;
-}
-
-int compareFunction(const void *a, const void *b){
-	return (strcmp((char*)a, (char*)b));
 }
 
 bool checkFirstMeaninglessData(char *pstr)
@@ -318,6 +322,9 @@ int main( int argc, char *argv[] )
     saveNotExistWordList();
     saveExistWordList();
 
+    //If you want to compare two files(list of words), then use the function below (two file's name as parameter)
+    //This function generates CompareResult.txt file as a result.
+    //makeFileCompareResult("src/a.txt", "src/b.txt");
 exitMain:
     fclose(fpTxt);
     return 0;

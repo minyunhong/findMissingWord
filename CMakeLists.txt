@@ -13,6 +13,7 @@ set(BIN_NAME findMissingWord.exe)
 
 #source list
 set(SRC_LIST
+    ${CMAKE_SOURCE_DIR}/src/wordFileCompare.cpp
     ${CMAKE_SOURCE_DIR}/src/findMissingWord.c
 )
 
