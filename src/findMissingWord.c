@@ -23,40 +23,44 @@ extern int makeFileCompareResult(char*, char*);
 
 int compareFunction(const void *a, const void *b)
 {
-	return (strcmp((char*)a, (char*)b));
+    return (strcmp((char*)a, (char*)b));
 }
 
 void changeToLowerWord(char* word)
 {
-	int length = strlen(word);
-	int i;
-	for(i=0; i<length; i++){
-		word[i] = (char)tolower(word[i]);
-	}
+    int length = strlen(word);
+    int i = 0;
+
+    for (i=0; i<length; i++)
+    {
+        word[i] = (char)tolower(word[i]);
+    }
 }
 
 bool isAllCapitalWord(char* word)
 {
-	int length = strlen(word);
-	int i;
-	
-	if(length == 1) return false;
+    int length = strlen(word);
+    int i = 0;
 
-	for(i=0; i<length; i++){
-		if(islower(word[i]))
-			return false;
-	}
+    if (length == 1)
+        return false;
+
+    for (i=0; i<length; i++)
+    {
+        if (islower(word[i]))
+            return false;
+    }
 #if DEBUG
     printf("All capital word %s\n", word);
 #endif
 
-	return true;
+    return true;
 }
 
 void preProcessingForCaseSensitiveWord(char *word)
 {
-        if(!isAllCapitalWord(word))
-            changeToLowerWord(word);
+    if (!isAllCapitalWord(word))
+        changeToLowerWord(word);
 }
 
 bool checkFirstMeaninglessData(char *pstr)
@@ -69,7 +73,7 @@ bool checkFirstMeaninglessData(char *pstr)
 
 bool checkAlreadySearchedWord(char *word)
 {
-    int i=0;
+    int i = 0;
 
     //1. check already searched existing word
     for (i=0; i<cntExistWord; i++)
@@ -123,16 +127,16 @@ bool checkExistingWord(char *argv, char *word)
     strncpy(onlyWord, word, strlen(word)+1);
 
     //pre condition for result array
-    if(checkAlreadySearchedWord(onlyWord) == true)
+    if (checkAlreadySearchedWord(onlyWord) == true)
         goto exitCheckFunc;
 
     while (1)
     {
         if (feof(fpBnf)!=0)
         {
-            if(existDiffCase == true)
+            if (existDiffCase == true)
             {
-		preProcessingForCaseSensitiveWord(onlyWord);
+                preProcessingForCaseSensitiveWord(onlyWord);
                 strcpy(existDiffCaseWordList[cntExistDiffCaseWord++], onlyWord);
 #if DEBUG
                 printf("--> exist diff case: %s\n", onlyWord);
@@ -140,8 +144,8 @@ bool checkExistingWord(char *argv, char *word)
             }
             else
             {
-		preProcessingForCaseSensitiveWord(onlyWord);
-		strcpy(notExistWordList[cntNotExistWord++], onlyWord);
+                preProcessingForCaseSensitiveWord(onlyWord);
+                strcpy(notExistWordList[cntNotExistWord++], onlyWord);
 #if DEBUG
                 printf("--> not exist: %s\n", onlyWord);
 #endif
@@ -155,23 +159,23 @@ bool checkExistingWord(char *argv, char *word)
         //skip carriage return or line feed
         if (pstr[0] == '\r' || pstr[0] == '\n' || strstr(pstr, prefixWord) == NULL)
         {
-            memset(pstr, STR_LENG, 0);
+            memset(pstr, 0, STR_LENG);
             continue;
         }
 
         //check existing word
         ptr = NULL;
-        if(strtok_r(pstr, delimiter, (char**)&pSafe) != NULL)
+        if (strtok_r(pstr, delimiter, (char**)&pSafe) != NULL)
         {
             ptr = strtok_r(NULL, delimiter, (char**)&pSafe);
 
-            if(!strcasecmp(ptr, onlyWord))
+            if (!strcasecmp(ptr, onlyWord))
             {
-                if(!strcmp(ptr, onlyWord)) // perfectly the same word exists in .bnf
+                if (!strcmp(ptr, onlyWord)) // perfectly the same word exists in .bnf
                 {
-                    if(strchr(strtok_r(NULL, delimiter, (char**)&pSafe), ';'))  // exists only one pronunciation
+                    if (strchr(strtok_r(NULL, delimiter, (char**)&pSafe), ';'))  // exists only one pronunciation
                     {
-			preProcessingForCaseSensitiveWord(onlyWord);
+                        preProcessingForCaseSensitiveWord(onlyWord);
                         strcpy(existOnlyOneWordList[cntExistOnlyOneWord++], onlyWord);
 #if DEBUG
                         printf("--> exist only one word: %s\n", onlyWord);
@@ -179,7 +183,7 @@ bool checkExistingWord(char *argv, char *word)
                     }
                     else    // exists two or more pronunciations
                     {
-			preProcessingForCaseSensitiveWord(onlyWord);
+                        preProcessingForCaseSensitiveWord(onlyWord);
                         strcpy(existWordList[cntExistWord++], onlyWord);
 #if DEBUG
                         printf("--> exist: %s\n", onlyWord);
@@ -191,7 +195,7 @@ bool checkExistingWord(char *argv, char *word)
                     existDiffCase = true;
             }
         }
-        memset(pstr, STR_LENG, 0);
+        memset(pstr, 0, STR_LENG);
     }
     existDiffCase = false;
 
@@ -213,17 +217,10 @@ int saveNotExistWordList()
         return 0;
     }
 
-/*
-    //1. filtering all-captial-words (ex. AM/PM) and change other-words to lower
-    for(i=0; i<cntNotExistWord; i++){
-        if(!isAllCapitalWord(notExistWordList[i]))
-            changeToLowerWord(notExistWordList[i]);
-    }
-*/
-    //2. sort the word list
+    //1. sort the word list
     qsort(notExistWordList, cntNotExistWord, sizeof(*notExistWordList), compareFunction);
 
-    //3. remove duplicated word and write the list to file
+    //2. remove duplicated word and write the list to file
     for (i=0; i<cntNotExistWord; i++){
         if(strcmp(previous_word, notExistWordList[i]))
             fprintf(fp, "%s\n", notExistWordList[i]);
@@ -231,11 +228,10 @@ int saveNotExistWordList()
     }
 
     fprintf(fp, "\nonly one word exists..\n");
-
     qsort(existOnlyOneWordList, cntExistOnlyOneWord, sizeof(*existOnlyOneWordList), compareFunction);
-    
-    for (i=0, strcpy(previous_word,""); i<cntExistOnlyOneWord; i++){
-        if(strcmp(previous_word, existOnlyOneWordList[i]))
+    for (i=0, strcpy(previous_word,""); i<cntExistOnlyOneWord; i++)
+    {
+        if (strcmp(previous_word, existOnlyOneWordList[i]))
             fprintf(fp, "%s\n", existOnlyOneWordList[i]);
         strcpy(previous_word, existOnlyOneWordList[i]);
     }
@@ -257,19 +253,18 @@ int saveExistWordList()
     }
 
     qsort(existWordList, cntExistWord, sizeof(*existWordList), compareFunction);
-    
-    for (i=0; i<cntExistWord; i++){
-        if(strcmp(previous_word, existWordList[i]))
+    for (i=0; i<cntExistWord; i++)
+    {
+        if (strcmp(previous_word, existWordList[i]))
             fprintf(fp, "%s\n", existWordList[i]);
         strcpy(previous_word, existWordList[i]);
     }
 
     fprintf(fp, "\ndiffrent case word exists..\n");
-
     qsort(existDiffCaseWordList, cntExistDiffCaseWord, sizeof(*existDiffCaseWordList), compareFunction);
-
-    for (i=0, strcpy(previous_word,""); i<cntExistDiffCaseWord; i++){
-        if(strcmp(previous_word, existDiffCaseWordList[i]))
+    for (i=0, strcpy(previous_word,""); i<cntExistDiffCaseWord; i++)
+    {
+        if (strcmp(previous_word, existDiffCaseWordList[i]))
             fprintf(fp, "%s\n", existDiffCaseWordList[i]);
         strcpy(previous_word, existDiffCaseWordList[i]);
     }
@@ -282,7 +277,7 @@ int main( int argc, char *argv[] )
     FILE *fpTxt = NULL;
     char pstr[STR_LENG] = {0};
     char *deleteSepeator = " [],./?\t\n\v\r";
-    unsigned char *pSafe;
+    unsigned char *pSafe = NULL;
 
     if (strstr(argv[1], ".bnf") && strstr(argv[2], ".txt"))
     {
@@ -311,7 +306,7 @@ int main( int argc, char *argv[] )
             //skip carriage return or line feed and so on..
             if (checkFirstMeaninglessData(pstr) == true)
             {
-                memset(pstr, STR_LENG, 0);
+                memset(pstr, 0, STR_LENG);
                 continue;
             }
 
@@ -335,23 +330,22 @@ int main( int argc, char *argv[] )
                     word = strtok_r(NULL, deleteSepeator, (char**)&pSafe);
                 }
             }
-            memset(pstr, STR_LENG, 0);
+            memset(pstr, 0, STR_LENG);
         }
         saveNotExistWordList();
         saveExistWordList();
     }
     else if(strstr(argv[1], ".txt") && strstr(argv[2], ".txt"))
     {
-	//Compare two txt file and find different word lists.
+        //Compare two txt file and find different word lists.
         //This function generates CompareResult.txt file as a result.
     	makeFileCompareResult(argv[1], argv[2]);
-	return 0;
+        return 0;
     }
     else
     {
         printf("%s, %d input param error! \n", __func__, __LINE__);
     }
-
 
 exitMain:
     fclose(fpTxt);
