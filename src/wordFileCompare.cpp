@@ -2,6 +2,7 @@
 #include <fstream>
 #include <set>
 #include <string>
+#include <algorithm>
 using namespace std;
 
 #define DEBUG 0
@@ -40,8 +41,10 @@ set<string> compareAndFindDifferentWords(char* fp1, char* fp2)
 
 	in.open(fp1);
 	while (getline(in, temp))
-	{
+	{	
+		temp.erase(remove(temp.begin(), temp.end(), '\r'), temp.end());
 		temp = preProcessingForSensitiveWord(temp);
+		cout << " 1: " << temp << endl;
 		first.insert(temp);
 	}
 	in.close();
@@ -50,12 +53,14 @@ set<string> compareAndFindDifferentWords(char* fp1, char* fp2)
 	in.open(fp2);
 	while (getline(in, temp))
 	{
+		temp.erase(remove(temp.begin(), temp.end(), '\r'), temp.end());
 		temp = preProcessingForSensitiveWord(temp);
+		cout << " 2: " << temp << endl;
 		iter = first.find(temp);
 		if (iter != first.end())
 		{
-#if DEBUG
-			cout << *iter << "is exist in first list" << endl;
+#if 1//DEBUG
+			cout << *iter << " is exist in first list" << endl;
 #endif
 		}
 		else
