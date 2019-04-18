@@ -18,7 +18,7 @@ int cntExistOnlyOneWord = 0;
 static int temp = 0;
 
 //It is implemented in compare_list.cpp file.
-//you can complare two wordlist-files.
+//you can compare two wordlist-files.
 extern int makeFileCompareResult(char*, char*);
 
 int compareFunction(const void *a, const void *b)
@@ -32,9 +32,7 @@ void changeToLowerWord(char* word)
     int i = 0;
 
     for (i=0; i<length; i++)
-    {
         word[i] = (char)tolower(word[i]);
-    }
 }
 
 bool isAllCapitalWord(char* word)

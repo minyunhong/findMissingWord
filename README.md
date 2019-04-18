@@ -11,3 +11,7 @@ Copy the xxx.bnf and xxx.txt in the same directory.
 # xxx.bnf file is for checking pronunciation
 # pattern.txt have all of the sentence
 # check notExistWordList.txt and existWordList.txt
+
+# use case 2 ( 1.txt 2.txt )
+# ./findMissingWord.exe 1.txt 2.txt
+# compare each word list
